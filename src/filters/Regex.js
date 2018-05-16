@@ -1,5 +1,4 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import React, { Component, PropTypes } from 'react';
 import Const from '../Const';
 
 class RegexFilter extends Component {
@@ -21,17 +20,17 @@ class RegexFilter extends Component {
 
   cleanFiltered() {
     const value = this.props.defaultValue ? this.props.defaultValue : '';
-    this.inputText.value = value;
+    this.refs.inputText.value = value;
     this.props.filterHandler(value, Const.FILTER_TYPE.TEXT);
   }
 
   applyFilter(filterRegx) {
-    this.inputText.value = filterRegx;
+    this.refs.inputText.value = filterRegx;
     this.props.filterHandler(filterRegx, Const.FILTER_TYPE.REGEX);
   }
 
   componentDidMount() {
-    const value = this.inputText.value;
+    const value = this.refs.inputText.value;
     if (value) {
       this.props.filterHandler(value, Const.FILTER_TYPE.REGEX);
     }
@@ -44,7 +43,7 @@ class RegexFilter extends Component {
   render() {
     const { defaultValue, placeholder, columnName, style } = this.props;
     return (
-      <input ref={ n => this.inputText = n }
+      <input ref='inputText'
           className='filter text-filter form-control'
           type='text'
           style={ style }
@@ -60,7 +59,7 @@ RegexFilter.propTypes = {
   defaultValue: PropTypes.string,
   delay: PropTypes.number,
   placeholder: PropTypes.string,
-  columnName: PropTypes.any,
+  columnName: PropTypes.string,
   style: PropTypes.oneOfType([ PropTypes.object ])
 };
 

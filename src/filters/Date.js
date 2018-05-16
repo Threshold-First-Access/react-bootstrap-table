@@ -1,7 +1,6 @@
 /* eslint quotes: 0 */
 /* eslint max-len: 0 */
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import React, { Component, PropTypes } from 'react';
 import Const from '../Const';
 
 const legalComparators = [ '=', '>', '>=', '<', '<=', '!=' ];
@@ -29,7 +28,7 @@ class DateFilter extends Component {
   }
 
   onChangeComparator(event) {
-    let date = this.inputDate.value;
+    let date = this.refs.inputDate.value;
     const comparator = event.target.value;
     if (date === '') {
       return;
@@ -52,7 +51,7 @@ class DateFilter extends Component {
   }
 
   filter(event) {
-    const comparator = this.dateFilterComparator.value;
+    const comparator = this.refs.dateFilterComparator.value;
     const dateValue = event.target.value;
     if (dateValue) {
       this.props.filterHandler({ date: new Date(dateValue), comparator }, Const.FILTER_TYPE.DATE);
@@ -65,22 +64,22 @@ class DateFilter extends Component {
     const value = this.setDefaultDate();
     const comparator = (this.props.defaultValue) ? this.props.defaultValue.comparator : '';
     this.setState(() => { return { isPlaceholderSelected: (value === '') }; });
-    this.dateFilterComparator.value = comparator;
-    this.inputDate.value = value;
+    this.refs.dateFilterComparator.value = comparator;
+    this.refs.inputDate.value = value;
     this.props.filterHandler({ date: new Date(value), comparator }, Const.FILTER_TYPE.DATE);
   }
 
   applyFilter(filterDateObj) {
     const { date, comparator } = filterDateObj;
     this.setState(() => { return { isPlaceholderSelected: (date === '') }; });
-    this.dateFilterComparator.value = comparator;
-    this.inputDate.value = dateParser(date);
+    this.refs.dateFilterComparator.value = comparator;
+    this.refs.inputDate.value = dateParser(date);
     this.props.filterHandler({ date, comparator }, Const.FILTER_TYPE.DATE);
   }
 
   componentDidMount() {
-    const comparator = this.dateFilterComparator.value;
-    const dateValue = this.inputDate.value;
+    const comparator = this.refs.dateFilterComparator.value;
+    const dateValue = this.refs.inputDate.value;
     if (comparator && dateValue) {
       this.props.filterHandler({ date: new Date(dateValue), comparator }, Const.FILTER_TYPE.DATE);
     }
@@ -90,14 +89,14 @@ class DateFilter extends Component {
     const { defaultValue, style: { date, comparator } } = this.props;
     return (
       <div className='filter date-filter'>
-        <select ref={ n => this.dateFilterComparator = n }
+        <select ref='dateFilterComparator'
                 style={ comparator }
                 className='date-filter-comparator form-control'
                 onChange={ this.onChangeComparator }
                 defaultValue={ (defaultValue) ? defaultValue.comparator : '' }>
           { this.getComparatorOptions() }
         </select>
-        <input ref={ n => this.inputDate = n }
+        <input ref='inputDate'
            className='filter date-filter-input form-control'
            style={ date }
            type='date'
@@ -137,7 +136,7 @@ DateFilter.propTypes = {
       }
     }
   },
-  columnName: PropTypes.any
+  columnName: PropTypes.string
 };
 
 DateFilter.defaultProps = {

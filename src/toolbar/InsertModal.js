@@ -1,7 +1,6 @@
 /* eslint no-console: 0 */
 
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import React, { Component, PropTypes } from 'react';
 
 import InsertModalHeader from './InsertModalHeader';
 import InsertModalFooter from './InsertModalFooter';
@@ -12,8 +11,9 @@ const defaultModalClassName = 'react-bs-table-insert-modal';
 export default class InsertModal extends Component {
 
   handleSave = () => {
-    if (this.body.getFieldValue) {
-      this.props.onSave(this.body.getFieldValue());
+    const bodyRefs = this.refs.body;
+    if (bodyRefs.getFieldValue) {
+      this.props.onSave(bodyRefs.getFieldValue());
     } else {
       console.error(`Custom InsertModalBody should implement getFieldValue function
         and should return an object presented as the new row that user input.`);
@@ -37,7 +37,7 @@ export default class InsertModal extends Component {
     footerComponent = footerComponent && footerComponent(onModalClose, this.handleSave);
 
     if (bodyComponent) {
-      bodyComponent = React.cloneElement(bodyComponent, { ref: node => this.body = node });
+      bodyComponent = React.cloneElement(bodyComponent, { ref: 'body' });
     }
 
     if (headerComponent && headerComponent.type.name === InsertModalHeader.name) {
@@ -73,13 +73,12 @@ export default class InsertModal extends Component {
         {
           headerComponent ||
           (<InsertModalHeader
-            version={ this.props.version }
             className='react-bs-table-inser-modal-header'
             onModalClose={ onModalClose }/>)
         }
         {
           bodyComponent ||
-          (<InsertModalBody ref={ node => this.body = node } { ...bodyAttr }/>)
+          (<InsertModalBody ref='body' { ...bodyAttr }/>)
         }
         {
           footerComponent ||
@@ -93,7 +92,6 @@ export default class InsertModal extends Component {
   }
 }
 InsertModal.propTypes = {
-  version: PropTypes.string.isRequired,
   columns: PropTypes.array.isRequired,
   validateState: PropTypes.object.isRequired,
   ignoreEditable: PropTypes.bool,

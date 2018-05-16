@@ -70,15 +70,11 @@ export default class CustomExpandClass extends React.Component {
 
   render() {
     const options = {
-      expandBodyClass: function(row, rowIndex, isExpanding) {
-        if (!isExpanding) {
-          return 'current-is-hidden';
+      expandBodyClass: function(row, rowIndex) {
+        if (rowIndex > 1) {
+          return 'custom-expand-body-1';
         } else {
-          if (rowIndex > 1) {
-            return 'custom-expand-body-1';
-          } else {
-            return 'custom-expand-body-0';
-          }
+          return 'custom-expand-body-0';
         }
       },
       expandParentClass: 'custom-expand-parent'  // expandParentClass also accept callback function

@@ -1,5 +1,4 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import React, { Component, PropTypes } from 'react';
 import classSet from 'classnames';
 
 class PageButton extends Component {
@@ -10,7 +9,7 @@ class PageButton extends Component {
 
   pageBtnClick = e => {
     e.preventDefault();
-    this.props.changePage(this.props.pageNumber);
+    this.props.changePage(e.currentTarget.textContent);
   }
 
   render() {
@@ -33,8 +32,7 @@ PageButton.propTypes = {
   active: PropTypes.bool,
   disable: PropTypes.bool,
   hidden: PropTypes.bool,
-  children: PropTypes.node,
-  pageNumber: PropTypes.number
+  children: PropTypes.node
 };
 
 export default PageButton;

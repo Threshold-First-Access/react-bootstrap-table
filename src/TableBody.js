@@ -1,5 +1,4 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import React, { Component, PropTypes } from 'react';
 import Utils from './util';
 import Const from './Const';
 import TableRow from './TableRow';
@@ -17,23 +16,19 @@ class TableBody extends Component {
   }
 
   render() {
-    const { cellEdit, beforeShowError, x, y, keyBoardNav, trStyle, version } = this.props;
-    const customTableClasses = {
+    const { cellEdit, beforeShowError, x, y, keyBoardNav } = this.props;
+    const tableClasses = classSet('table', {
       'table-striped': this.props.striped,
       'table-bordered': this.props.bordered,
-      'table-hover': this.props.hover
-    };
-    if (this.props.condensed) {
-      if (Utils.isBootstrap4(version)) customTableClasses['table-sm'] = true;
-      else customTableClasses['table-condensed'] = true;
-    }
-    const tableClasses = classSet('table', customTableClasses, this.props.tableBodyClass);
+      'table-hover': this.props.hover,
+      'table-condensed': this.props.condensed
+    }, this.props.tableBodyClass);
 
     const noneditableRows = (cellEdit.nonEditableRows && cellEdit.nonEditableRows()) || [];
     const unselectable = this.props.selectRow.unselectable || [];
-    const isSelectRowDefined = Utils.isSelectRowDefined(this.props.selectRow.mode);
+    const isSelectRowDefined = this._isSelectRowDefined();
     const tableHeader = Utils.renderColGroup(this.props.columns,
-        this.props.selectRow, this.props.expandColumnOptions, version);
+        this.props.selectRow, this.props.expandColumnOptions);
     const inputType = this.props.selectRow.mode === Const.ROW_SELECT_SINGLE ? 'radio' : 'checkbox';
     const CustomComponent = this.props.selectRow.customComponent;
     const enableKeyBoardNav = (keyBoardNav === true || typeof keyBoardNav === 'object');
@@ -77,12 +72,10 @@ class TableBody extends Component {
                 completeEdit={ this.handleCompleteEditCell }
                 // add by bluespring for column editor customize
                 editable={ editable }
-                attrs={ column.editAttrs }
                 customEditor={ column.customEditor }
                 format={ column.format ? format : false }
                 key={ i }
                 blurToSave={ cellEdit.blurToSave }
-                blurToEscape={ cellEdit.blurToEscape }
                 onTab={ this.handleEditCell }
                 rowIndex={ r }
                 colIndex={ i }
@@ -96,40 +89,28 @@ class TableBody extends Component {
             );
         } else {
           // add by bluespring for className customize
-          let formattedValue;
           let columnChild = fieldValue && fieldValue.toString();
           let columnTitle = null;
           let tdClassName = column.className;
-          let tdStyles = column.style;
           if (Utils.isFunction(column.className)) {
             tdClassName = column.className(fieldValue, data, r, i);
           }
 
-          if (Utils.isFunction(column.style)) {
-            tdStyles = column.style(fieldValue, data, r, i);
-          }
-
           if (typeof column.format !== 'undefined') {
-            formattedValue = column.format(fieldValue, data, column.formatExtraData, r);
+            const formattedValue = column.format(fieldValue, data, column.formatExtraData, r);
             if (!React.isValidElement(formattedValue)) {
               columnChild = (
                 <div dangerouslySetInnerHTML={ { __html: formattedValue } }></div>
               );
             } else {
               columnChild = formattedValue;
+              columnTitle = column.columnTitle && formattedValue ? formattedValue.toString() : null;
             }
-          }
-          if (Utils.isFunction(column.columnTitle)) {
-            columnTitle = column.columnTitle(fieldValue, data, r, i);
-          } else if (typeof column.columnTitle === 'string') {
-            columnTitle = column.columnTitle;
-          } else if (column.columnTitle) {
-            if (formattedValue) columnTitle = formattedValue.toString();
-            else if (fieldValue) columnTitle = fieldValue.toString();
+          } else {
+            columnTitle = column.columnTitle && fieldValue ? fieldValue.toString() : null;
           }
           return (
             <TableColumn key={ i }
-              cIndex={ i }
               rIndex={ r }
               dataAlign={ column.align }
               className={ tdClassName }
@@ -140,14 +121,13 @@ class TableBody extends Component {
               width={ column.width }
               onClick={ this.handleClickCell }
               attrs={ column.attrs }
-              style={ tdStyles }
+              style={ column.style }
               tabIndex={ (tabIndex++) + '' }
               isFocus={ isFocusCell }
               keyBoardNav={ enableKeyBoardNav }
               onKeyDown={ this.handleCellKeyDown }
               customNavStyle={ customNavStyle }
-              row={ data }
-              withoutTabIndex={ this.props.withoutTabIndex }>
+              row={ data }>
               { columnChild }
             </TableColumn>
           );
@@ -161,11 +141,11 @@ class TableBody extends Component {
       const expandedRowColumn = this.renderExpandRowColumn(
           this.props.expandableRow && this.props.expandableRow(data),
           this.props.expanding.indexOf(key) > -1,
-          ExpandColumnCustomComponent, r
+          ExpandColumnCustomComponent, r, data
       );
       const haveExpandContent = this.props.expandableRow && this.props.expandableRow(data);
       const isExpanding = haveExpandContent && this.props.expanding.indexOf(key) > -1;
-      const { hideRowOnExpand } = this.props;
+
       // add by bluespring for className customize
       let trClassName = this.props.trClassName;
       if (Utils.isFunction(this.props.trClassName)) {
@@ -173,8 +153,8 @@ class TableBody extends Component {
       }
       if (isExpanding && this.props.expandParentClass) {
         trClassName += Utils.isFunction(this.props.expandParentClass) ?
-          ` ${this.props.expandParentClass(data, r)}` :
-          ` ${this.props.expandParentClass}`;
+          this.props.expandParentClass(data, r) :
+          this.props.expandParentClass;
       }
       const result = [ <TableRow isSelected={ selected } key={ key } className={ trClassName }
         index={ r }
@@ -187,10 +167,7 @@ class TableBody extends Component {
         onRowMouseOut={ this.handleRowMouseOut }
         onSelectRow={ this.handleSelectRow }
         onExpandRow={ this.handleClickCell }
-        unselectableRow={ disable }
-        style={ trStyle }
-        hidden={ isExpanding && hideRowOnExpand }
-        dbClickToEdit={ cellEdit.mode === Const.CELL_EDIT_DBCLICK } >
+        unselectableRow={ disable }>
         { this.props.expandColumnOptions.expandColumnVisible &&
             this.props.expandColumnOptions.expandColumnBeforeSelectColumn &&
             expandedRowColumn }
@@ -203,7 +180,7 @@ class TableBody extends Component {
 
       if (haveExpandContent) {
         const expandBodyClass = Utils.isFunction(this.props.expandBodyClass) ?
-          this.props.expandBodyClass(data, r, isExpanding) :
+          this.props.expandBodyClass(data, r) :
           this.props.expandBodyClass;
         result.push(
           <ExpandComponent
@@ -223,10 +200,9 @@ class TableBody extends Component {
 
     if (tableRows.length === 0 && !this.props.withoutNoDataText) {
       const colSpan = this.props.columns.filter(c => !c.hidden).length
-        + ((isSelectRowDefined && !this.props.selectRow.hideSelectColumn) ? 1 : 0)
-        + (this.props.expandColumnOptions.expandColumnVisible ? 1 : 0);
+        + (isSelectRowDefined ? 1 : 0);
       tableRows = [
-        <TableRow key='##table-empty##' style={ trStyle }>
+        <TableRow key='##table-empty##'>
           <td data-toggle='collapse'
               colSpan={ colSpan }
               className='react-bs-table-no-data'>
@@ -237,13 +213,12 @@ class TableBody extends Component {
     }
 
     return (
-      <div
-        ref={ node => this.container = node }
+      <div ref='container'
         className={ classSet('react-bs-container-body', this.props.bodyContainerClass) }
         style={ this.props.style }>
         <table className={ tableClasses }>
-          { React.cloneElement(tableHeader, { ref: node => this.header = node }) }
-          <tbody ref={ node => this.tbody = node }>
+          { React.cloneElement(tableHeader, { ref: 'header' }) }
+          <tbody ref='tbody'>
             { tableRows }
           </tbody>
         </table>
@@ -253,7 +228,7 @@ class TableBody extends Component {
 
   handleCellKeyDown = (e, lastEditCell) => {
     e.preventDefault();
-    const { keyBoardNav, onNavigateCell, cellEdit, selectedRowKeys } = this.props;
+    const { keyBoardNav, onNavigateCell, cellEdit } = this.props;
     let offset;
     if (e.keyCode === 37) {
       offset = { x: -1, y: 0 };
@@ -270,29 +245,20 @@ class TableBody extends Component {
     } else if (e.keyCode === 40) {
       offset = { x: 0, y: 1 };
     } else if (e.keyCode === 13) {
-      const rowIndex = e.target.parentElement.rowIndex + 1;
       const enterToEdit = typeof keyBoardNav === 'object' ?
         keyBoardNav.enterToEdit :
         false;
       const enterToExpand = typeof keyBoardNav === 'object' ?
         keyBoardNav.enterToExpand :
         false;
-      const enterToSelect = typeof keyBoardNav === 'object' ?
-        keyBoardNav.enterToSelect :
-        false;
 
       if (cellEdit && enterToEdit) {
-        this.handleEditCell(rowIndex, e.currentTarget.cellIndex, '', e);
+        this.handleEditCell(e.target.parentElement.rowIndex + 1,
+          e.currentTarget.cellIndex, '', e);
       }
 
       if (enterToExpand) {
-        this.handleClickCell(e, this.props.y + 1, this.props.x);
-      }
-
-      if (enterToSelect) {
-        const isSelected = selectedRowKeys.indexOf(
-          this.props.data[rowIndex - 1][this.props.keyField]) !== -1;
-        this.handleSelectRow(rowIndex, !isSelected, e);
+        this.handleClickCell(this.props.y + 1, this.props.x);
       }
     }
     if (offset && keyBoardNav) {
@@ -310,17 +276,17 @@ class TableBody extends Component {
     this.props.onRowMouseOver(targetRow, event);
   }
 
-  handleRowClick = (rowIndex, cellIndex, event) => {
-    const { onRowClick, selectRow } = this.props;
-    if (Utils.isSelectRowDefined(selectRow.mode)) cellIndex--;
+  handleRowClick = (rowIndex, cellIndex) => {
+    const { onRowClick } = this.props;
+    if (this._isSelectRowDefined()) cellIndex--;
     if (this._isExpandColumnVisible()) cellIndex--;
-    onRowClick(this.props.data[rowIndex - 1], rowIndex - 1, cellIndex, event);
+    onRowClick(this.props.data[rowIndex - 1], rowIndex - 1, cellIndex);
   }
 
-  handleRowDoubleClick = (rowIndex, event) => {
+  handleRowDoubleClick = rowIndex => {
     const { onRowDoubleClick } = this.props;
     const targetRow = this.props.data[rowIndex];
-    onRowDoubleClick(targetRow, event);
+    onRowDoubleClick(targetRow);
   }
 
   handleSelectRow = (rowIndex, isSelected, e) => {
@@ -332,7 +298,7 @@ class TableBody extends Component {
         return false;
       }
     });
-    onSelectRow(selectedRow, isSelected, e, rowIndex - 1);
+    onSelectRow(selectedRow, isSelected, e);
   }
 
   handleSelectRowColumChange = (e, rowIndex) => {
@@ -345,22 +311,20 @@ class TableBody extends Component {
     }
   }
 
-  handleClickCell = (event, rowIndex, columnIndex = -1) => {
+  handleClickCell = (rowIndex, columnIndex = -1) => {
     const {
       columns,
       keyField,
       expandBy,
       expandableRow,
       selectRow: {
-        mode,
         clickToExpand,
         hideSelectColumn
       },
       onlyOneExpanding
     } = this.props;
-    const isSelectRowDefined = Utils.isSelectRowDefined(mode);
-    const selectRowAndExpand = isSelectRowDefined && !clickToExpand ? false : true;
-    columnIndex = isSelectRowDefined && !hideSelectColumn ? columnIndex - 1 : columnIndex;
+    const selectRowAndExpand = this._isSelectRowDefined() && !clickToExpand ? false : true;
+    columnIndex = this._isSelectRowDefined() && !hideSelectColumn ? columnIndex - 1 : columnIndex;
     columnIndex = this._isExpandColumnVisible() ? columnIndex - 1 : columnIndex;
     if (expandableRow &&
       selectRowAndExpand &&
@@ -379,13 +343,13 @@ class TableBody extends Component {
         if (onlyOneExpanding) expanding = [ rowKey ];
         else expanding.push(rowKey);
       }
-      this.props.onExpand(expanding, rowKey, isRowExpanding, event);
+      this.props.onExpand(expanding, rowKey, isRowExpanding);
     }
   }
 
   handleEditCell = (rowIndex, columnIndex, action, e) => {
     const { selectRow } = this.props;
-    const defineSelectRow = Utils.isSelectRowDefined(selectRow.mode);
+    const defineSelectRow = this._isSelectRowDefined();
     const expandColumnVisible = this._isExpandColumnVisible();
     if (defineSelectRow) {
       columnIndex--;
@@ -456,7 +420,7 @@ class TableBody extends Component {
 
   handleCompleteEditCell = (newVal, rowIndex, columnIndex) => {
     if (newVal !== null) {
-      const result = this.props.onEditCell(newVal, rowIndex, columnIndex);
+      const result = this.props.cellEdit.__onCompleteEdit__(newVal, rowIndex, columnIndex);
       if (result !== Const.AWAIT_BEFORE_CELL_EDIT) {
         this.setState(() => { return { currEditCell: null }; });
       }
@@ -476,7 +440,7 @@ class TableBody extends Component {
       const unselectable = this.props.selectRow.unselectable || [];
       if (unselectable.indexOf(row[this.props.keyField]) === -1) {
         this.handleSelectRow(rowIndex + 1, isSelect, e);
-        this.handleClickCell(e, rowIndex + 1);
+        this.handleClickCell(rowIndex + 1);
       }
     }
   }
@@ -503,8 +467,8 @@ class TableBody extends Component {
     if (CustomComponent) {
       content = (<CustomComponent isExpandableRow={ isExpandableRow } isExpanded={ isExpanded } />);
     } else if (isExpandableRow) {
-      content = (isExpanded ? (<span className='fa fa-minus glyphicon glyphicon-minus'></span>) :
-        (<span className='fa fa-plus glyphicon glyphicon-plus'></span>) );
+      content = (isExpanded ? (<span className='glyphicon glyphicon-minus'></span>) :
+        (<span className='glyphicon glyphicon-plus'></span>) );
     } else {
       content = ' ';
     }
@@ -512,10 +476,15 @@ class TableBody extends Component {
     return (
       <td
         className='react-bs-table-expand-cell'
-        onClick={ e => this.handleClickCell(e, rowIndex + 1) }>
+        onClick={ () => this.handleClickCell(rowIndex + 1) }>
         { content }
       </td>
     );
+  }
+
+  _isSelectRowDefined() {
+    return this.props.selectRow.mode === Const.ROW_SELECT_SINGLE ||
+          this.props.selectRow.mode === Const.ROW_SELECT_MULTI;
   }
 
   _isExpandColumnVisible() {
@@ -523,11 +492,10 @@ class TableBody extends Component {
   }
 
   getHeaderColGrouop = () => {
-    return this.header.childNodes;
+    return this.refs.header.childNodes;
   }
 }
 TableBody.propTypes = {
-  version: PropTypes.string,
   data: PropTypes.array,
   columns: PropTypes.array,
   striped: PropTypes.bool,
@@ -557,8 +525,6 @@ TableBody.propTypes = {
   keyBoardNav: PropTypes.oneOfType([ PropTypes.bool, PropTypes.object ]),
   x: PropTypes.number,
   y: PropTypes.number,
-  onNavigateCell: PropTypes.func,
-  withoutTabIndex: PropTypes.bool,
-  hideRowOnExpand: PropTypes.bool
+  onNavigateCell: PropTypes.func
 };
 export default TableBody;

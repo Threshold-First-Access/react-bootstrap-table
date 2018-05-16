@@ -1,5 +1,4 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import React, { Component, PropTypes } from 'react';
 import classSet from 'classnames';
 import Const from '../Const';
 
@@ -23,9 +22,9 @@ class SelectFilter extends Component {
     };
   }
 
-  componentWillReceiveProps() {
-    const currentSelectValue = this.selectInput.value;
-    const isPlaceholderSelected = !currentSelectValue || currentSelectValue === '';
+  componentWillReceiveProps(nextProps) {
+    const isPlaceholderSelected = (nextProps.defaultValue === undefined ||
+      !nextProps.options.hasOwnProperty(nextProps.defaultValue));
     this.setState(() => {
       return {
         isPlaceholderSelected
@@ -41,7 +40,7 @@ class SelectFilter extends Component {
       needFilter = true;
     }
     if (needFilter) {
-      const value = this.selectInput.value;
+      const value = this.refs.selectInput.value;
       if (value) {
         this.props.filterHandler(value, Const.FILTER_TYPE.SELECT);
       }
@@ -57,14 +56,14 @@ class SelectFilter extends Component {
   cleanFiltered() {
     const value = (this.props.defaultValue !== undefined) ? this.props.defaultValue : '';
     this.setState(() => { return { isPlaceholderSelected: (value === '') }; });
-    this.selectInput.value = value;
+    this.refs.selectInput.value = value;
     this.props.filterHandler(value, Const.FILTER_TYPE.SELECT);
   }
 
   applyFilter(filterOption) {
     filterOption = filterOption + '';
     this.setState(() => { return { isPlaceholderSelected: (filterOption === '') }; });
-    this.selectInput.value = filterOption;
+    this.refs.selectInput.value = filterOption;
     this.props.filterHandler(filterOption, Const.FILTER_TYPE.SELECT);
   }
 
@@ -84,7 +83,7 @@ class SelectFilter extends Component {
   }
 
   componentDidMount() {
-    const value = this.selectInput.value;
+    const value = this.refs.selectInput.value;
     if (value) {
       this.props.filterHandler(value, Const.FILTER_TYPE.SELECT);
     }
@@ -95,7 +94,7 @@ class SelectFilter extends Component {
               { 'placeholder-selected': this.state.isPlaceholderSelected });
 
     return (
-      <select ref={ n => this.selectInput = n }
+      <select ref='selectInput'
           style={ this.props.style }
           className={ selectClass }
           onChange={ this.filter }
@@ -110,7 +109,7 @@ SelectFilter.propTypes = {
   filterHandler: PropTypes.func.isRequired,
   options: PropTypes.object.isRequired,
   placeholder: PropTypes.string,
-  columnName: PropTypes.any,
+  columnName: PropTypes.string,
   style: PropTypes.oneOfType([ PropTypes.object ])
 };
 

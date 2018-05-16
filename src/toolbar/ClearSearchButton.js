@@ -1,5 +1,4 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import React, { Component, PropTypes } from 'react';
 
 const clearBtnDefaultClass = 'react-bs-table-search-clear-btn';
 
@@ -17,7 +16,7 @@ class ClearSearchButton extends Component {
     const content = children ||
       (<span>{ btnText }</span>);
     return (
-      <button
+      <button ref='btn'
         className={ `btn ${btnContextual} ${className} ${clearBtnDefaultClass}` }
         type='button'
         onClick={ onClick }
@@ -35,7 +34,7 @@ ClearSearchButton.propTypes = {
   onClick: PropTypes.func
 };
 ClearSearchButton.defaultProps = {
-  btnContextual: 'btn-default btn-secondary',
+  btnContextual: 'btn-default',
   className: '',
   btnText: 'Clear',
   onClick: undefined

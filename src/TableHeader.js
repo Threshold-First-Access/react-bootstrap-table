@@ -1,11 +1,8 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import React, { Component, PropTypes } from 'react';
 import ReactDOM from 'react-dom';
 import Const from './Const';
 import classSet from 'classnames';
 import SelectRowHeaderColumn from './SelectRowHeaderColumn';
-import ExpandRowHeaderColumn from './ExpandRowHeaderColumn';
-import Utils from './util';
 
 class Checkbox extends Component {
   componentDidMount() { this.update(this.props.checked); }
@@ -38,22 +35,14 @@ function getSortOrder(sortList, field, enableSort) {
 class TableHeader extends Component {
 
   render() {
-    const { sortIndicator, sortList, onSort, reset, version, condensed, bordered,
-      expandedColumnHeaderComponent, noAnyExpand, toggleExpandAllChilds, expandAll
-    } = this.props;
     const containerClasses = classSet(
       'react-bs-container-header',
       'table-header-wrapper',
       this.props.headerContainerClass);
-    const customTableClasses = {
-      'table-bordered': bordered
-    };
-    if (condensed) {
-      if (Utils.isBootstrap4(version)) customTableClasses['table-sm'] = true;
-      else customTableClasses['table-condensed'] = true;
-    }
-    const tableClasses = classSet(
-      'table', 'table-hover', customTableClasses, this.props.tableHeaderClass);
+    const tableClasses = classSet('table', 'table-hover', {
+      'table-bordered': this.props.bordered,
+      'table-condensed': this.props.condensed
+    }, this.props.tableHeaderClass);
 
     const rowCount = Math.max(...React.Children.map(this.props.children, elm =>
       (elm && elm.props.row) ? Number(elm.props.row) : 0
@@ -66,22 +55,15 @@ class TableHeader extends Component {
     rows[0].push( [
       this.props.expandColumnVisible &&
         this.props.expandColumnBeforeSelectColumn &&
-          <ExpandRowHeaderColumn key='expandCol' rowCount={ rowCount + 1 }
-            expandedColumnHeaderComponent={ expandedColumnHeaderComponent }
-            noAnyExpand={ noAnyExpand }
-            expandAll={ expandAll }
-            toggleExpandAllChilds={ toggleExpandAllChilds }/>
+          <th className='react-bs-table-expand-cell'> </th>
     ], [
       this.renderSelectRowHeader(rowCount + 1, rowKey++)
     ], [
       this.props.expandColumnVisible &&
         !this.props.expandColumnBeforeSelectColumn &&
-          <ExpandRowHeaderColumn key='expandCol' rowCount={ rowCount + 1 }
-            expandedColumnHeaderComponent={ expandedColumnHeaderComponent }
-            noAnyExpand={ noAnyExpand }
-            expandAll={ expandAll }
-            toggleExpandAllChilds={ toggleExpandAllChilds }/>
+          <th className='react-bs-table-expand-cell'> </th>
     ]);
+    const { sortIndicator, sortList, onSort, reset } = this.props;
 
     React.Children.forEach(this.props.children, (elm) => {
       if (elm === null || elm === undefined) {
@@ -97,11 +79,11 @@ class TableHeader extends Component {
       }
       if ((rowSpan + rowIndex) === (rowCount + 1)) {
         rows[rowIndex].push(React.cloneElement(
-          elm, { reset, key: rowKey++, onSort, sort, sortIndicator, isOnlyHead: false, version }
+          elm, { reset, key: rowKey++, onSort, sort, sortIndicator, isOnlyHead: false }
           ));
       } else {
         rows[rowIndex].push(React.cloneElement(
-          elm, { key: rowKey++, isOnlyHead: true, version }
+          elm, { key: rowKey++, isOnlyHead: true }
           ));
       }
     });
@@ -115,13 +97,10 @@ class TableHeader extends Component {
     });
 
     return (
-      <div
-        ref={ node => this.container = node }
-        className={ containerClasses }
-        style={ this.props.style }>
+      <div ref='container' className={ containerClasses } style={ this.props.style }>
         <table className={ tableClasses }>
-          { React.cloneElement(this.props.colGroups, { ref: node => this.headerGrp = node }) }
-          <thead ref={ node => this.header = node }>
+          { React.cloneElement(this.props.colGroups, { ref: 'headerGrp' }) }
+          <thead ref='header'>
             { trs }
           </thead>
         </table>
@@ -130,7 +109,7 @@ class TableHeader extends Component {
   }
 
   getHeaderColGrouop = () => {
-    return this.headerGrp.childNodes;
+    return this.refs.headerGrp.childNodes;
   }
 
   renderSelectRowHeader(rowCount, rowKey) {
@@ -179,12 +158,7 @@ TableHeader.propTypes = {
   reset: PropTypes.bool,
   expandColumnVisible: PropTypes.bool,
   expandColumnComponent: PropTypes.func,
-  expandedColumnHeaderComponent: PropTypes.func,
-  expandColumnBeforeSelectColumn: PropTypes.bool,
-  version: PropTypes.string,
-  noAnyExpand: PropTypes.bool,
-  expandAll: PropTypes.bool,
-  toggleExpandAllChilds: PropTypes.func
+  expandColumnBeforeSelectColumn: PropTypes.bool
 };
 
 export default TableHeader;

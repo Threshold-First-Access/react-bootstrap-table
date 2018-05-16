@@ -34,7 +34,6 @@ export default class CustomSizePerPageDropDown extends React.Component {
   renderSizePerPageDropDown = (props) => {
     return (
       <SizePerPageDropDown
-        open={ props.open }
         className='my-size-per-page'
         btnContextual='btn-warning'
         variation='dropup'

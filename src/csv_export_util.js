@@ -3,14 +3,13 @@
 /* eslint no-var: 0 */
 /* eslint no-unused-vars: 0 */
 import Util from './util';
-import Const from './Const';
 
 if (Util.canUseDOM()) {
   const filesaver = require('./filesaver');
   var saveAs = filesaver.saveAs;
 }
 
-function toString(data, keys, separator, excludeCSVHeader) {
+function toString(data, keys, separator) {
   let dataString = '';
   if (data.length === 0) return dataString;
 
@@ -26,11 +25,10 @@ function toString(data, keys, separator, excludeCSVHeader) {
     }
   });
 
-  const firstRow = excludeCSVHeader ? 1 : 0;
-  for (let i = firstRow; i <= rowCount; i++) {
+  for (let i = 0; i <= rowCount; i++) {
     dataString += headCells.map(x => {
       if ((x.row + (x.rowSpan - 1)) === i) {
-        return `"${x.header}"`;
+        return x.header;
       }
       if (x.row === i && x.rowSpan > 1) {
         return '';
@@ -46,10 +44,9 @@ function toString(data, keys, separator, excludeCSVHeader) {
 
   data.map(function(row) {
     keys.map(function(col, i) {
-      const { field, format, extraData, type } = col;
-      let value = typeof format !== 'undefined' ? format(row[field], row, extraData) : row[field];
-      value = type === Const.CSV_NUMBER_TYPE ? Number(value) : `"${value}"`;
-      const cell = typeof value !== 'undefined' ? value : '';
+      const { field, format, extraData } = col;
+      const value = typeof format !== 'undefined' ? format(row[field], row, extraData) : row[field];
+      const cell = typeof value !== 'undefined' ? ('"' + value + '"') : '';
       dataString += cell;
       if (i + 1 < keys.length) dataString += separator;
     });
@@ -60,13 +57,12 @@ function toString(data, keys, separator, excludeCSVHeader) {
   return dataString;
 }
 
-const exportCSV = function(data, keys, filename, separator, noAutoBOM, excludeCSVHeader) {
-  const dataString = toString(data, keys, separator, excludeCSVHeader);
+const exportCSV = function(data, keys, filename, separator) {
+  const dataString = toString(data, keys, separator);
   if (typeof window !== 'undefined') {
-    noAutoBOM = noAutoBOM === undefined ? true : noAutoBOM;
-    saveAs(new Blob([ '\ufeff', dataString ],
+    saveAs(new Blob([ dataString ],
         { type: 'text/plain;charset=utf-8' }),
-        filename, noAutoBOM);
+        filename, true);
   }
 };
 

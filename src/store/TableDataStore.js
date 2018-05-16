@@ -130,11 +130,9 @@ export class TableDataStore {
     //   if (result.length !== 0) return result[0];
     // });
     const result = [];
-    if (!keys || keys.length === 0) {
-      return result;
-    }
     for (let i = 0; i < this.data.length; i++) {
       const d = this.data[i];
+      if (!keys || keys.length === 0) break;
       if (keys.indexOf(d[this.keyField]) > -1) {
         keys = keys.filter(k => k !== d[this.keyField]);
         result.push(d);
@@ -424,8 +422,8 @@ export class TableDataStore {
     return this.filterText(targetVal, filterVal, cond);
   }
 
-  filterText(targetVal = '', filterVal, cond = Const.FILTER_COND_LIKE) {
-    targetVal = targetVal === null ? '' : targetVal.toString();
+  filterText(targetVal, filterVal, cond = Const.FILTER_COND_LIKE) {
+    targetVal = targetVal.toString();
     filterVal = filterVal.toString();
     if (cond === Const.FILTER_COND_EQ) {
       return targetVal === filterVal;
@@ -434,14 +432,6 @@ export class TableDataStore {
       filterVal = filterVal.toLowerCase();
       return !(targetVal.indexOf(filterVal) === -1);
     }
-  }
-
-  /**
-   * Filter if targetVal is contained in filterVal.
-   */
-  filterArray(targetVal, filterVal) {
-    // case insensitive
-    return filterVal.indexOf(targetVal) > -1;
   }
 
   /* General search function
@@ -496,13 +486,6 @@ export class TableDataStore {
           filterVal = filterObj[key].value;
           break;
         }
-        case Const.FILTER_TYPE.ARRAY: {
-          filterVal = filterObj[key].value;
-          if (!Array.isArray(filterVal)) {
-            throw new Error('Value must be an Array');
-          }
-          break;
-        }
         default: {
           filterVal = filterObj[key].value;
           if (filterVal === undefined) {
@@ -541,10 +524,6 @@ export class TableDataStore {
         case Const.FILTER_TYPE.CUSTOM: {
           const cond = filterObj[key].props ? filterObj[key].props.cond : Const.FILTER_COND_LIKE;
           valid = this.filterCustom(targetVal, filterVal, filterObj[key].value, cond);
-          break;
-        }
-        case Const.FILTER_TYPE.ARRAY: {
-          valid = this.filterArray(targetVal, filterVal);
           break;
         }
         default: {
@@ -658,9 +637,8 @@ export class TableDataStore {
         if (sortFunc) {
           result = sortFunc(a, b, sortDetails.order, sortDetails.sortField, sortFuncExtraData);
         } else {
-          const valueA = a[sortDetails.sortField] == null ? '' : a[sortDetails.sortField];
-          const valueB = b[sortDetails.sortField] == null ? '' : b[sortDetails.sortField];
-
+          const valueA = a[sortDetails.sortField] === null ? '' : a[sortDetails.sortField];
+          const valueB = b[sortDetails.sortField] === null ? '' : b[sortDetails.sortField];
           if (isDesc) {
             if (typeof valueB === 'string') {
               result = valueB.localeCompare(valueA);

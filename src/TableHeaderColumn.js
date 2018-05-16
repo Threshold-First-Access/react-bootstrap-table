@@ -1,7 +1,6 @@
 /* eslint default-case: 0 */
 /* eslint guard-for-in: 0 */
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import React, { Component, PropTypes } from 'react';
 import classSet from 'classnames';
 import Const from './Const';
 import Util from './util';
@@ -22,19 +21,6 @@ class TableHeaderColumn extends Component {
     if (nextProps.reset) {
       this.cleanFiltered();
     }
-
-    // If column not displaying the same dataField, reset the filter accordingly
-    if (nextProps.filter && nextProps.dataField !== this.props.dataField) {
-      const emitter = nextProps.filter.emitter || {};
-      const currentFilter = emitter.currentFilter || {};
-      const filter = currentFilter[nextProps.dataField];
-      const value = filter ? filter.value : '';
-
-      const { ref } = this.getFilters(nextProps) || {};
-      if (this.refs[ref]) {
-        this.refs[ref].setState({ value });
-      }
-    }
   }
 
   handleColumnClick = () => {
@@ -50,77 +36,55 @@ class TableHeaderColumn extends Component {
     filter.emitter.handleFilter(this.props.dataField, value, type, filter);
   }
 
-  getFilters(props = this.props) {
-    const { headerText, children } = props;
-    switch (props.filter.type) {
+  getFilters() {
+    const { headerText, children } = this.props;
+    switch (this.props.filter.type) {
     case Const.FILTER_TYPE.TEXT: {
       return (
-        <TextFilter ref={ n => this.textFilter = n } { ...props.filter }
+        <TextFilter ref='textFilter' { ...this.props.filter }
           columnName={ headerText || children } filterHandler={ this.handleFilter } />
       );
     }
     case Const.FILTER_TYPE.REGEX: {
       return (
-        <RegexFilter ref={ n => this.regexFilter = n } { ...props.filter }
+        <RegexFilter ref='regexFilter' { ...this.props.filter }
           columnName={ headerText || children } filterHandler={ this.handleFilter } />
       );
     }
     case Const.FILTER_TYPE.SELECT: {
       return (
-        <SelectFilter ref={ n => this.selectFilter = n } { ...props.filter }
+        <SelectFilter ref='selectFilter' { ...this.props.filter }
           columnName={ headerText || children } filterHandler={ this.handleFilter } />
       );
     }
     case Const.FILTER_TYPE.NUMBER: {
       return (
-        <NumberFilter ref={ n => this.numberFilter = n } { ...props.filter }
+        <NumberFilter ref='numberFilter' { ...this.props.filter }
           columnName={ headerText || children } filterHandler={ this.handleFilter } />
       );
     }
     case Const.FILTER_TYPE.DATE: {
       return (
-        <DateFilter ref={ n => this.dateFilter = n } { ...props.filter }
+        <DateFilter ref='dateFilter' { ...this.props.filter }
           columnName={ headerText || children } filterHandler={ this.handleFilter } />
       );
     }
     case Const.FILTER_TYPE.CUSTOM: {
-      const elm = props.filter.getElement(this.handleFilter,
-          props.filter.customFilterParameters);
+      const elm = this.props.filter.getElement(this.handleFilter,
+          this.props.filter.customFilterParameters);
 
-      return React.cloneElement(elm, { ref: n => this.customFilter = n });
+      return React.cloneElement(elm, { ref: 'customFilter' });
     }
     }
   }
 
   componentDidMount() {
-    this.headerCol.setAttribute('data-field', this.props.dataField);
-  }
-
-  renderDefaultCaret(dataSort, isBootstrap4) {
-    if (!dataSort) return null;
-    if (isBootstrap4) {
-      return (
-        <span className='order fa fa-sort'
-          style={ { margin: '10px 0 10px 5px', color: '#ccc' } }></span>
-      );
-    } else {
-      return (
-        <span className='order'>
-          <span className='dropdown'>
-            <span className='caret' style={ { margin: '10px 0 10px 5px', color: '#ccc' } }></span>
-          </span>
-          <span className='dropup'>
-            <span className='caret' style={ { margin: '10px 0', color: '#ccc' } }></span>
-          </span>
-        </span>
-      );
-    }
+    this.refs['header-col'].setAttribute('data-field', this.props.dataField);
   }
 
   render() {
     let defaultCaret;
     let sortCaret;
-    let sortClass;
     const {
       headerText,
       dataAlign,
@@ -135,8 +99,6 @@ class TableHeaderColumn extends Component {
       caretRender,
       className,
       isOnlyHead,
-      version,
-      sortHeaderColumnClassName: customSortClass,
       thStyle: style
     } = this.props;
     const thStyle = {
@@ -144,25 +106,28 @@ class TableHeaderColumn extends Component {
       display: hidden ? 'none' : null,
       ...style
     };
-    const isBootstrap4 = Util.isBootstrap4(version);
     if (!isOnlyHead) {
       if (sortIndicator) {
-        defaultCaret = this.renderDefaultCaret(dataSort, isBootstrap4);
+        defaultCaret = (!dataSort) ? null : (
+          <span className='order'>
+            <span className='dropdown'>
+              <span className='caret' style={ { margin: '10px 0 10px 5px', color: '#ccc' } }></span>
+            </span>
+            <span className='dropup'>
+              <span className='caret' style={ { margin: '10px 0', color: '#ccc' } }></span>
+            </span>
+          </span>
+        );
       }
-      sortCaret = sort ? Util.renderReactSortCaret(sort, isBootstrap4) : defaultCaret;
+      sortCaret = sort ? Util.renderReactSortCaret(sort) : defaultCaret;
       if (caretRender) {
         sortCaret = caretRender(sort, dataField);
       }
     }
 
-    if (sort) {
-      sortClass = Util.isFunction(customSortClass) ?
-        customSortClass(sort, dataField) : customSortClass;
-    }
     const classes = classSet(
       Util.isFunction(className) ? className() : className,
-      !isOnlyHead && dataSort ? 'sort-column' : '',
-      sortClass);
+      !isOnlyHead && dataSort ? 'sort-column' : '');
 
     const attr = {};
     if (headerTitle) {
@@ -173,7 +138,7 @@ class TableHeaderColumn extends Component {
       }
     }
     return (
-      <th ref={ node => this.headerCol = node }
+      <th ref='header-col'
           className={ classes }
           style={ thStyle }
           onClick={ this.handleColumnClick }
@@ -190,57 +155,59 @@ class TableHeaderColumn extends Component {
   }
 
   cleanFiltered() {
-    if (!this.props.filter) return;
+    if (this.props.filter === undefined) {
+      return;
+    }
 
     switch (this.props.filter.type) {
     case Const.FILTER_TYPE.TEXT: {
-      this.textFilter.cleanFiltered();
+      this.refs.textFilter.cleanFiltered();
       break;
     }
     case Const.FILTER_TYPE.REGEX: {
-      this.regexFilter.cleanFiltered();
+      this.refs.regexFilter.cleanFiltered();
       break;
     }
     case Const.FILTER_TYPE.SELECT: {
-      this.selectFilter.cleanFiltered();
+      this.refs.selectFilter.cleanFiltered();
       break;
     }
     case Const.FILTER_TYPE.NUMBER: {
-      this.numberFilter.cleanFiltered();
+      this.refs.numberFilter.cleanFiltered();
       break;
     }
     case Const.FILTER_TYPE.DATE: {
-      this.dateFilter.cleanFiltered();
+      this.refs.dateFilter.cleanFiltered();
       break;
     }
     case Const.FILTER_TYPE.CUSTOM: {
-      this.customFilter.cleanFiltered();
+      this.refs.customFilter.cleanFiltered();
       break;
     }
     }
   }
 
   applyFilter(val) {
-    if (!this.props.filter) return;
+    if (this.props.filter === undefined) return;
     switch (this.props.filter.type) {
     case Const.FILTER_TYPE.TEXT: {
-      this.textFilter.applyFilter(val);
+      this.refs.textFilter.applyFilter(val);
       break;
     }
     case Const.FILTER_TYPE.REGEX: {
-      this.regexFilter.applyFilter(val);
+      this.refs.regexFilter.applyFilter(val);
       break;
     }
     case Const.FILTER_TYPE.SELECT: {
-      this.selectFilter.applyFilter(val);
+      this.refs.selectFilter.applyFilter(val);
       break;
     }
     case Const.FILTER_TYPE.NUMBER: {
-      this.numberFilter.applyFilter(val);
+      this.refs.numberFilter.applyFilter(val);
       break;
     }
     case Const.FILTER_TYPE.DATE: {
-      this.dateFilter.applyFilter(val);
+      this.refs.dateFilter.applyFilter(val);
       break;
     }
     }
@@ -263,7 +230,6 @@ TableHeaderColumn.propTypes = {
   dataFormat: PropTypes.func,
   csvFormat: PropTypes.func,
   csvHeader: PropTypes.string,
-  csvFieldType: PropTypes.oneOf([ Const.CSV_STRING_TYPE, Const.CSV_NUMBER_TYPE ]),
   isKey: PropTypes.bool,
   editable: PropTypes.any,
   hidden: PropTypes.bool,
@@ -276,15 +242,10 @@ TableHeaderColumn.propTypes = {
   width: PropTypes.string,
   sortFunc: PropTypes.func,
   sortFuncExtraData: PropTypes.any,
-  sortHeaderColumnClassName: PropTypes.any,
   columnClassName: PropTypes.any,
   editColumnClassName: PropTypes.any,
   invalidEditColumnClassName: PropTypes.any,
-  columnTitle: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.func,
-    PropTypes.string
-  ]),
+  columnTitle: PropTypes.bool,
   filterFormatted: PropTypes.bool,
   filterValue: PropTypes.func,
   sort: PropTypes.string,
@@ -309,8 +270,7 @@ TableHeaderColumn.propTypes = {
   export: PropTypes.bool,
   expandable: PropTypes.bool,
   tdAttr: PropTypes.object,
-  editTdAttr: PropTypes.object,
-  tdStyle: PropTypes.oneOfType([ PropTypes.func, PropTypes.object ]),
+  tdStyle: PropTypes.object,
   thStyle: PropTypes.object,
   keyValidator: PropTypes.bool,
   defaultASC: PropTypes.bool
@@ -324,7 +284,6 @@ TableHeaderColumn.defaultProps = {
   dataFormat: undefined,
   csvFormat: undefined,
   csvHeader: undefined,
-  csvFieldType: Const.CSV_STRING_TYPE,
   isKey: false,
   editable: true,
   onSort: undefined,
@@ -347,7 +306,6 @@ TableHeaderColumn.defaultProps = {
   sortIndicator: true,
   expandable: true,
   tdAttr: undefined,
-  editTdAttr: undefined,
   tdStyle: undefined,
   thStyle: undefined,
   keyValidator: false,

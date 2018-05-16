@@ -1,7 +1,6 @@
 /* eslint max-len: 0 */
 /* eslint no-console: 0 */
 /* eslint no-alert: 0 */
-/* eslint no-unused-vars: 0 */
 import React from 'react';
 import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
 
@@ -22,7 +21,7 @@ function addProducts(quantity) {
 
 addProducts(5);
 
-function onAfterDeleteRow(rowKeys, rows) {
+function onAfterDeleteRow(rowKeys) {
   alert('The rowkey you drop: ' + rowKeys);
 }
 

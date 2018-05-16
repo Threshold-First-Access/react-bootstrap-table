@@ -1,5 +1,4 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import React, { Component, PropTypes } from 'react';
 import Const from '../Const';
 
 class TextFilter extends Component {
@@ -7,9 +6,6 @@ class TextFilter extends Component {
     super(props);
     this.filter = this.filter.bind(this);
     this.timeout = null;
-    this.state = {
-      value: this.props.defaultValue || ''
-    };
   }
 
   filter(event) {
@@ -17,7 +13,6 @@ class TextFilter extends Component {
       clearTimeout(this.timeout);
     }
     const filterValue = event.target.value;
-    this.setState(() => { return { value: filterValue }; });
     this.timeout = setTimeout(() => {
       this.props.filterHandler(filterValue, Const.FILTER_TYPE.TEXT);
     }, this.props.delay);
@@ -25,25 +20,19 @@ class TextFilter extends Component {
 
   cleanFiltered() {
     const value = this.props.defaultValue ? this.props.defaultValue : '';
-    this.setState(() => { return { value }; });
+    this.refs.inputText.value = value;
     this.props.filterHandler(value, Const.FILTER_TYPE.TEXT);
   }
 
   applyFilter(filterText) {
-    this.setState(() => { return { value: filterText }; });
+    this.refs.inputText.value = filterText;
     this.props.filterHandler(filterText, Const.FILTER_TYPE.TEXT);
   }
 
   componentDidMount() {
-    const defaultValue = this.inputText.value;
+    const defaultValue = this.refs.inputText.value;
     if (defaultValue) {
       this.props.filterHandler(defaultValue, Const.FILTER_TYPE.TEXT);
-    }
-  }
-
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.defaultValue !== this.props.defaultValue) {
-      this.applyFilter(nextProps.defaultValue || '');
     }
   }
 
@@ -52,15 +41,15 @@ class TextFilter extends Component {
   }
 
   render() {
-    const { placeholder, columnName, style } = this.props;
+    const { placeholder, columnName, defaultValue, style } = this.props;
     return (
-      <input ref={ n => this.inputText = n }
+      <input ref='inputText'
         className='filter text-filter form-control'
         type='text'
         style={ style }
         onChange={ this.filter }
         placeholder={ placeholder || `Enter ${columnName}...` }
-        value={ this.state.value } />
+        defaultValue={ defaultValue ? defaultValue : '' } />
     );
   }
 }
@@ -70,7 +59,7 @@ TextFilter.propTypes = {
   defaultValue: PropTypes.string,
   delay: PropTypes.number,
   placeholder: PropTypes.string,
-  columnName: PropTypes.any,
+  columnName: PropTypes.string,
   style: PropTypes.oneOfType([ PropTypes.object ])
 };
 
